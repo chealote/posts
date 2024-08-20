@@ -1,0 +1,7 @@
+{
+  "username": "postgres",
+  "password": "mysecretpassword",
+  "hostname": "localhost",
+  "database": "posts",
+  "scriptsPath": "./scripts"
+}
