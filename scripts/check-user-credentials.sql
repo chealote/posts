@@ -1,1 +1,1 @@
-SELECT secret FROM users WHERE username = $1
+SELECT secret FROM users WHERE username = '%s'

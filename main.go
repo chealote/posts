@@ -1,21 +1,16 @@
 package main
 
 import (
-	"flag"
-	"net/http"
-	"os"
-	"encoding/json"
-	"posts/internal/auth"
-	"posts/internal/posts"
-	"posts/internal/database"
+	"fmt"
 	"posts/internal/database/sqlite"
-	"posts/internal/handler"
+	"posts/internal/database"
 )
 
+/* TODO also bring this back
 var (
 	initDbFlag = flag.Bool("i", false, "initialize DB and exit")
 	configFilepath = flag.String("c", "config.json", "config variables")
-	cfg = database.Cfg{}
+	cfg = sqlite.Cfg{}
 )
 
 func init() {
@@ -35,16 +30,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	database.Database = conn
 
 	if *initDbFlag {
-		database.Database.Initialize()
+		conn.Initialize()
 		os.Exit(0)
 	}
 
 	// TODO where should DB be?
-	auth.DB = database.Database
-	posts.DB = database.Database
+	auth.DB = conn
 
 	m := http.NewServeMux()
 	h := handler.Handler{Mux: m}
@@ -52,4 +45,27 @@ func main() {
 	m.HandleFunc("/signup", handler.HandleSignUp)
 	m.HandleFunc("/signin", handler.HandleSignIn)
 	http.ListenAndServe(":8080", h)
+}
+*/
+
+func main() {
+	// instance database
+	// sqlite injection
+	config := sqlite.Config{
+		Username: "",
+		Password: "",
+	}
+
+	sqlite, err := sqlite.Connect(config)
+	if err != nil {
+		panic(err)
+	}
+
+	db := database.Database{
+		Conn: sqlite,
+		ScriptsPath: "./scripts",
+	}
+
+	fmt.Println(db.RegisterUser("ale", "secret"))
+	fmt.Println(db.CreateSession("ale", "secret"))
 }

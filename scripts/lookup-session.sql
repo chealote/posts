@@ -1,1 +1,1 @@
-SELECT token FROM sessions WHERE token = $1 AND expires > DATETIME('now')
+SELECT token FROM sessions WHERE token = '%s' AND expires > DATETIME('now')
