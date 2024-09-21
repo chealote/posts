@@ -1,1 +1,1 @@
-INSERT INTO users VALUES ('%s', '%s')
+INSERT INTO users VALUES ($1, $2)

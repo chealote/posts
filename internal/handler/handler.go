@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"posts/internal/auth"
+	"posts/internal/posts"
 )
 
 var (
@@ -46,7 +47,12 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleRoot(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello world"))
+	content, err := posts.ListTopPosts()
+	if err != nil {
+		fmt.Println("HandleRoot:", err)
+		replyError(w, http.StatusInternalServerError)
+	}
+	w.Write(content)
 }
 
 func HandleSignUp(w http.ResponseWriter, r *http.Request) {

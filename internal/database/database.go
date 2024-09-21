@@ -2,30 +2,38 @@ package database
 
 import (
 	"errors"
-	"fmt"
-	"os"
 )
 
 var (
-	ErrUnauthorized = errors.New("error unauthorized")
+	NotesTablename   = "notes"
+	SessionTablename = "sessions"
+	UsersTablename   = "users"
+
+	ErrUnauthorized = errors.New("Unauthorized")
+	Database  Implementation
 )
 
-type Connection interface {
-	RunQuery(string, ...any) error
-	Exec(string) error
+type Cfg struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Hostname string `json:"hostname"`
+	Database string `json:"database"`
+	ScriptsPath string `json:"scriptsPath"`
 }
 
-type Database struct {
-	Conn Connection
-	ScriptsPath string
+type Post struct {
+	Title string
+	Link string
 }
 
-func (d Database) RunQuery(query string) error {
-	return d.Conn.RunQuery(query)
-}
+type Implementation interface {
+	Initialize() error
 
-func (d Database) getQuery(script string) (string, error) {
-	content, err := os.ReadFile(fmt.Sprintf("%s/%s.sql", d.ScriptsPath, script))
-	return string(content), err
-}
+	// auth
+	LookupSession(session string) (bool, error)
+	RegisterUser(username string, secret string) error
+	CreateSession(username string, secret string) (string, error)
 
+	// post
+	ListTopPosts() ([]Post, error)
+}
