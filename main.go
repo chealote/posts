@@ -6,7 +6,6 @@ import (
 	"os"
 	"encoding/json"
 	"posts/internal/auth"
-	"posts/internal/posts"
 	"posts/internal/database"
 	"posts/internal/database/sqlite"
 	"posts/internal/handler"
@@ -15,7 +14,7 @@ import (
 var (
 	initDbFlag = flag.Bool("i", false, "initialize DB and exit")
 	configFilepath = flag.String("c", "config.json", "config variables")
-	cfg = database.Cfg{}
+	config = database.Config{}
 )
 
 func init() {
@@ -25,13 +24,13 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	if err := json.Unmarshal(contents, &cfg); err != nil {
+	if err := json.Unmarshal(contents, &config); err != nil {
 		panic(err)
 	}
 }
 
 func main() {
-	conn, err := sqlite.Connect(cfg)
+	conn, err := sqlite.Connect(config)
 	if err != nil {
 		panic(err)
 	}
@@ -44,7 +43,6 @@ func main() {
 
 	// TODO where should DB be?
 	auth.DB = database.Database
-	posts.DB = database.Database
 
 	m := http.NewServeMux()
 	h := handler.Handler{Mux: m}

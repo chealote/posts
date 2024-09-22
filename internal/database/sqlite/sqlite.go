@@ -11,7 +11,7 @@ import (
 
 type SQLite struct {
 	conn *sql.DB
-	cfg database.Cfg
+	config database.Config
 }
 
 func (d SQLite) Initialize() error {
@@ -20,22 +20,22 @@ func (d SQLite) Initialize() error {
 		return err
 	}
 
-	fmt.Println("running the query:", query)
 	_, err = d.conn.Exec(query)
 	return err
 }
 
-func Connect(cfg database.Cfg) (database.Implementation, error) {
+func Connect(config database.Config) (database.Implementation, error) {
 	conn, err := sql.Open("sqlite3", "posts.db")
 	if err != nil {
 		return SQLite{}, err
 	}
 
-	return SQLite{conn, cfg}, err
+	return SQLite{conn, config}, err
 }
 
 func (d SQLite) getQuery(script string) (string, error) {
-	content, err := os.ReadFile(fmt.Sprintf("%s/%s.sql", d.cfg.ScriptsPath, script))
+	content, err := os.ReadFile(fmt.Sprintf("%s/%s.sql", d.config.ScriptsPath, script))
+	fmt.Println("running the query:", string(content))
 	return string(content), err
 }
 
@@ -139,30 +139,4 @@ func (d SQLite) CreateSession(username string, secret string) (string, error) {
 	}
 	_, err = d.conn.Exec(query, username, token)
 	return token, err
-}
-
-func (d SQLite) ListTopPosts() ([]database.Post, error) {
-	query, err := d.getQuery("list-top-posts")
-	if err != nil {
-		return []database.Post{}, err
-	}
-
-	rows, err := d.conn.Query(query)
-	if err != nil {
-		return []database.Post{}, err
-	}
-	defer rows.Close()
-
-	posts := []database.Post{}
-	title := ""
-	link := ""
-	for rows.Next() {
-		rows.Scan(&title, &link)
-		posts = append(posts, database.Post{
-			Title: title,
-			Link: link,
-		})
-	}
-
-	return posts, err
 }

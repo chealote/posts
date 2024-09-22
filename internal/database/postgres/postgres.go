@@ -6,23 +6,23 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func getConnectionString(cfg Cfg) string {
-	if cfg.Database == "" {
+func getConnectionString(config config) string {
+	if config.Database == "" {
 		return fmt.Sprintf("postgresql://%s:%s@%s/?sslmode=disable",
-			cfg.Username, cfg.Password, cfg.Hostname)
+			config.Username, config.Password, config.Hostname)
 	}
 	return fmt.Sprintf("postgresql://%s:%s@%s/%s?sslmode=disable",
-		cfg.Username, cfg.Password, cfg.Hostname, cfg.Database)
+		config.Username, config.Password, config.Hostname, config.Database)
 }
 
-func Initialize(cfg Cfg) error {
-	connStr := getConnectionString(cfg)
+func Initialize(config config) error {
+	connStr := getConnectionString(config)
 	conn, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return err
 	}
 
-	_, err = conn.Exec(fmt.Sprintf(`CREATE DATABASE %s`, cfg.Database))
+	_, err = conn.Exec(fmt.Sprintf(`CREATE DATABASE %s`, config.Database))
 	if err != nil {
 		return err
 	}
@@ -32,8 +32,8 @@ func Initialize(cfg Cfg) error {
 	return err
 }
 
-func Connect(cfg Cfg) (Database, error) {
-	connStr := getConnectionString(cfg)
+func Connect(config config) (Database, error) {
+	connStr := getConnectionString(config)
 
 	conn, err := sql.Open("postgres", connStr)
 	if err != nil {

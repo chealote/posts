@@ -13,17 +13,12 @@ var (
 	Database  Implementation
 )
 
-type Cfg struct {
+type Config struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Hostname string `json:"hostname"`
 	Database string `json:"database"`
 	ScriptsPath string `json:"scriptsPath"`
-}
-
-type Post struct {
-	Title string
-	Link string
 }
 
 type Implementation interface {
@@ -33,7 +28,4 @@ type Implementation interface {
 	LookupSession(session string) (bool, error)
 	RegisterUser(username string, secret string) error
 	CreateSession(username string, secret string) (string, error)
-
-	// post
-	ListTopPosts() ([]Post, error)
 }
