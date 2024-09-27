@@ -28,7 +28,7 @@ func Initialize(config config) error {
 	}
 
 	_, err = conn.Exec(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (username text, token text, expires timestamp)`, sessionTablename))
-	_, err = conn.Exec(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (username text, secret text)`, usersTablename))
+	_, err = conn.Exec(fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (username text, password text)`, usersTablename))
 	return err
 }
 

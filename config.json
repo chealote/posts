@@ -1,7 +1,11 @@
 {
-  "username": "postgres",
-  "password": "mysecretpassword",
-  "hostname": "localhost",
-  "database": "posts",
-  "scriptsPath": "./scripts"
+  "sqlite": {
+    "scriptsPath": "./scripts",
+    "filename": "posts.db"
+  },
+  "headers": {
+    "Access-Control-Allow-Origin": "null",
+    "Access-Control-Allow-Methods": "get,post",
+    "Access-Control-Allow-Headers": "access-control-allow-origin,content-type,authorization"
+  }
 }

@@ -7,12 +7,18 @@ import (
 	"posts/internal/auth"
 )
 
+type UserCredentials struct {
+	Name string `json:"name"`
+	Password string `json:"password"`
+}
+
 var (
-	IgnoreAuthPaths = []string{"/signup", "/signin"}
+	IgnoreAuthFromPaths = []string{"/signup", "/signin"}
 )
 
 type Handler struct {
 	Mux *http.ServeMux
+	Headers map[string]string
 }
 
 func replyError(w http.ResponseWriter, code int) {
@@ -20,25 +26,39 @@ func replyError(w http.ResponseWriter, code int) {
 }
 
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("path:", r.URL.Path)
-	for _, path := range IgnoreAuthPaths {
+	fmt.Println("Path:", r.URL.Path, "Method:", r.Method)
+
+	for header, value := range h.Headers {
+		w.Header().Set(header, value)
+	}
+
+	for _, path := range IgnoreAuthFromPaths {
 		if path == r.URL.Path {
 			h.Mux.ServeHTTP(w, r)
 			return
 		}
 	}
 
+	if r.Method == "OPTIONS" {
+		// TODO need to write something back? go just replies with 200 which is ok for me
+		return
+	}
+
 	if len(r.Header["Authorization"]) <= 0 {
+		fmt.Printf("ERROR: ServeHTTP: missing auth header\n")
 		replyError(w, http.StatusUnauthorized)
 		return
 	}
+
 	token := r.Header["Authorization"][0]
 	ok, err := auth.ValidateAuthorization(token)
 	if err != nil {
+		fmt.Printf("ERROR: ServeHTTP: %s\n", err)
 		replyError(w, http.StatusInternalServerError)
 		return
 	}
 	if !ok {
+		fmt.Printf("ERROR: ServeHTTP: token unauthorized: %s\n", token)
 		replyError(w, http.StatusUnauthorized)
 		return
 	}
@@ -46,22 +66,32 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleRoot(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello World"))
+	if r.Method == "OPTIONS" {
+		fmt.Println("In HandleRoot, skipping OPTIONS method")
+		return
+	}
+
+	switch r.URL.Path {
+	case "/signin":
+		HandleSignIn(w, r)
+	case "/signup":
+		HandleSignUp(w, r)
+	default:
+		back := fmt.Sprintf("Hello World from path %s", r.URL.Path)
+		w.Write([]byte(back))
+	}
 }
 
 func HandleSignUp(w http.ResponseWriter, r *http.Request) {
-	user := struct {
-		Name   string `json:"name"`
-		Secret string `json:"secret"`
-	}{}
+	user := UserCredentials{}
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		fmt.Println("HandleSignUp:", err)
+		fmt.Println("ERROR: HandleSignUp:", err)
 		replyError(w, http.StatusBadRequest)
 		return
 	}
-	fmt.Println("User:", user.Name, user.Secret)
-	if err := auth.RegisterUser(user.Name, user.Secret); err != nil {
-		fmt.Println("HandleSignUp:", err)
+	fmt.Println("User:", user.Name, user.Password)
+	if err := auth.RegisterUser(user.Name, user.Password); err != nil {
+		fmt.Println("ERROR: HandleSignUp:", err)
 		replyError(w, http.StatusBadRequest)
 		return
 	}
@@ -69,18 +99,15 @@ func HandleSignUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleSignIn(w http.ResponseWriter, r *http.Request) {
-	user := struct {
-		Name   string `json:"name"`
-		Secret string `json:"secret"`
-	}{}
+	user := UserCredentials{}
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		fmt.Println("HandleSignIn:", err)
+		fmt.Println("ERROR: HandleSignIn:", err)
 		replyError(w, http.StatusBadRequest)
 		return
 	}
-	token, err := auth.Login(user.Name, user.Secret)
+	token, err := auth.Login(user.Name, user.Password)
 	if err != nil {
-		fmt.Println("HandleSignIn:", err)
+		fmt.Println("ERROR: HandleSignIn:", err)
 		replyError(w, http.StatusUnauthorized)
 		return
 	}
@@ -92,7 +119,7 @@ func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 	}
 	res, err := json.Marshal(resToken)
 	if err != nil {
-		fmt.Println("HandleSignIn:", err)
+		fmt.Println("ERROR: HandleSignIn:", err)
 		replyError(w, http.StatusInternalServerError)
 		return
 	}

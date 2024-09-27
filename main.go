@@ -4,6 +4,7 @@ import (
 	"flag"
 	"net/http"
 	"os"
+	"fmt"
 	"encoding/json"
 	"posts/internal/auth"
 	"posts/internal/database"
@@ -11,28 +12,36 @@ import (
 	"posts/internal/handler"
 )
 
+type Config struct {
+	SQLite sqlite.Config `json:"sqlite"`
+	Headers map[string]string `json:"headers"`
+}
+
 var (
 	initDbFlag = flag.Bool("i", false, "initialize DB and exit")
 	configFilepath = flag.String("c", "config.json", "config variables")
-	config = database.Config{}
+	config = Config{}
 )
 
 func init() {
 	flag.Parse()
-
-	contents, err := os.ReadFile(*configFilepath)
-	if err != nil {
-		panic(err)
-	}
-	if err := json.Unmarshal(contents, &config); err != nil {
-		panic(err)
-	}
 }
 
 func main() {
-	conn, err := sqlite.Connect(config)
+	contents, err := os.ReadFile(*configFilepath)
 	if err != nil {
-		panic(err)
+		fmt.Println("ERROR: failed opening config file:", err)
+		os.Exit(1)
+	}
+	if err := json.Unmarshal(contents, &config); err != nil {
+		fmt.Println("ERROR: failed parsing config file:", err)
+		os.Exit(1)
+	}
+
+	conn, err := sqlite.Connect(config.SQLite)
+	if err != nil {
+		fmt.Println("ERROR: failed init():", err)
+		return
 	}
 	database.Database = conn
 
@@ -45,9 +54,10 @@ func main() {
 	auth.DB = database.Database
 
 	m := http.NewServeMux()
-	h := handler.Handler{Mux: m}
+	h := handler.Handler{
+		Mux: m,
+		Headers: config.Headers,
+	}
 	m.HandleFunc("/", handler.HandleRoot)
-	m.HandleFunc("/signup", handler.HandleSignUp)
-	m.HandleFunc("/signin", handler.HandleSignIn)
 	http.ListenAndServe(":8080", h)
 }

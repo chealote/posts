@@ -18,11 +18,11 @@ func ValidateAuthorization(session string) (bool, error) {
 	return ok, nil
 }
 
-func RegisterUser(username string, secret string) error {
+func RegisterUser(username string, password string) error {
 	// TODO check if user exists first? in the same query?
-	return DB.RegisterUser(username, secret)
+	return DB.RegisterUser(username, password)
 }
 
-func Login(username string, secret string) (string, error) {
-	return DB.CreateSession(username, secret)
+func Login(username string, password string) (string, error) {
+	return DB.CreateSession(username, password)
 }
