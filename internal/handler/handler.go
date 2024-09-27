@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"errors"
 	"net/http"
 	"posts/internal/auth"
 )
@@ -44,21 +45,34 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cookie, err := r.Cookie("token")
+	if err != nil {
+		switch {
+		case errors.Is(err, http.ErrNoCookie):
+			http.Error(w, "cookie not found", http.StatusUnauthorized)
+		default:
+			fmt.Println("ERROR:", err)
+			http.Error(w, "server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	/*
 	if len(r.Header["Authorization"]) <= 0 {
 		fmt.Printf("ERROR: ServeHTTP: missing auth header\n")
 		replyError(w, http.StatusUnauthorized)
 		return
-	}
+	}*/
 
-	token := r.Header["Authorization"][0]
-	ok, err := auth.ValidateAuthorization(token)
+	/* token := r.Header["Authorization"][0] */
+	ok, err := auth.ValidateAuthorization(cookie.Value)
 	if err != nil {
 		fmt.Printf("ERROR: ServeHTTP: %s\n", err)
 		replyError(w, http.StatusInternalServerError)
 		return
 	}
 	if !ok {
-		fmt.Printf("ERROR: ServeHTTP: token unauthorized: %s\n", token)
+		fmt.Printf("ERROR: ServeHTTP: token unauthorized: %s\n", cookie.Value)
 		replyError(w, http.StatusUnauthorized)
 		return
 	}
@@ -76,6 +90,8 @@ func HandleRoot(w http.ResponseWriter, r *http.Request) {
 		HandleSignIn(w, r)
 	case "/signup":
 		HandleSignUp(w, r)
+	case "/token":
+		w.Write([]byte("seems valid"))
 	default:
 		back := fmt.Sprintf("Hello World from path %s", r.URL.Path)
 		w.Write([]byte(back))
@@ -89,6 +105,7 @@ func HandleSignUp(w http.ResponseWriter, r *http.Request) {
 		replyError(w, http.StatusBadRequest)
 		return
 	}
+
 	fmt.Println("User:", user.Name, user.Password)
 	if err := auth.RegisterUser(user.Name, user.Password); err != nil {
 		fmt.Println("ERROR: HandleSignUp:", err)
@@ -105,6 +122,7 @@ func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 		replyError(w, http.StatusBadRequest)
 		return
 	}
+
 	token, err := auth.Login(user.Name, user.Password)
 	if err != nil {
 		fmt.Println("ERROR: HandleSignIn:", err)
@@ -112,6 +130,20 @@ func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cookie := http.Cookie{
+		Name:     "token",
+		Value:    token,
+		Path:     "/",
+		MaxAge:   15, // TODO make TTL a configurable param
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+	http.SetCookie(w, &cookie)
+
+	fmt.Println("HandleSignIn: success")
+
+	/* just write back a cookie
 	resToken := struct{
 		Token string `json:"token"`
 	}{
@@ -124,5 +156,5 @@ func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(res)
-	fmt.Println("HandleSignIn: success")
+	*/
 }
