@@ -41,12 +41,14 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "OPTIONS" {
-		// TODO need to write something back? go just replies with 200 which is ok for me
+		// TODO need to write something back? go just replies with 200
+		// which is ok for me
 		return
 	}
 
 	cookie, err := r.Cookie("token")
 	if err != nil {
+		fmt.Println("ERROR: something with the cookie?:", err)
 		switch {
 		case errors.Is(err, http.ErrNoCookie):
 			http.Error(w, "cookie not found", http.StatusUnauthorized)
@@ -134,12 +136,12 @@ func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 		Name:     "token",
 		Value:    token,
 		Path:     "/",
-		MaxAge:   15, // TODO make TTL a configurable param
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode,
+		Secure: true,
+		// MaxAge:   15, // TODO make TTL a configurable param
 	}
 	http.SetCookie(w, &cookie)
+	fmt.Println("setting the cookie:", cookie)
 
 	fmt.Println("HandleSignIn: success")
 
