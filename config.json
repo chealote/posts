@@ -6,6 +6,7 @@
   "headers": {
     "Access-Control-Allow-Origin": "null",
     "Access-Control-Allow-Methods": "get,post",
+    "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Headers": "access-control-allow-origin,content-type,authorization"
   }
 }
