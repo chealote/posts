@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"encoding/json"
 	"posts/internal/auth"
-	"posts/internal/database"
 	"posts/internal/database/sqlite"
 	"posts/internal/handler"
 )
@@ -16,6 +15,10 @@ type Config struct {
 	SQLite sqlite.Config `json:"sqlite"`
 	Headers map[string]string `json:"headers"`
 }
+
+const (
+	PORT = ":8080"
+)
 
 var (
 	initDbFlag = flag.Bool("i", false, "initialize DB and exit")
@@ -43,15 +46,14 @@ func main() {
 		fmt.Println("ERROR: failed init():", err)
 		return
 	}
-	database.Database = conn
 
 	if *initDbFlag {
-		database.Database.Initialize()
+		conn.Initialize()
 		os.Exit(0)
 	}
 
 	// TODO where should DB be?
-	auth.DB = database.Database
+	auth.DB = conn
 
 	m := http.NewServeMux()
 	h := handler.Handler{
@@ -59,5 +61,7 @@ func main() {
 		Headers: config.Headers,
 	}
 	m.HandleFunc("/", handler.HandleRoot)
-	http.ListenAndServe(":8080", h)
+
+	fmt.Println("Listening on port", PORT)
+	panic(http.ListenAndServe(PORT, h))
 }

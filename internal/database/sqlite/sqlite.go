@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"os"
 	"errors"
-	"posts/internal/database"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var (
 	InvalidConfigError = errors.New("Invalid config")
+	ErrUnauthorized = errors.New("Unauthorized")
 )
 
 type Config struct {
@@ -36,9 +36,9 @@ func (d SQLite) Initialize() error {
 	return err
 }
 
-func Connect(config Config) (database.Implementation, error) {
+func Connect(config Config) (SQLite, error) {
 	if config.Filename == "" || config.ScriptsPath == "" {
-		return nil, InvalidConfigError
+		return SQLite{}, InvalidConfigError
 	}
 
 	conn, err := sql.Open("sqlite3", config.Filename)
@@ -102,13 +102,13 @@ func (d SQLite) checkUserCredentials(username, password string) (bool, error) {
 	defer rows.Close()
 
 	if !rows.Next() {
-		return false, database.ErrUnauthorized
+		return false, ErrUnauthorized
 	}
 
 	dbPassword := ""
 	rows.Scan(&dbPassword)
 	if dbPassword != password {
-		return false, database.ErrUnauthorized
+		return false, ErrUnauthorized
 	}
 
 	return true, nil
