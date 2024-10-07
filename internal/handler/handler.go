@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"errors"
 	"net/http"
 	"posts/internal/auth"
 )
@@ -46,35 +45,21 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie, err := r.Cookie("token")
-	if err != nil {
-		fmt.Println("ERROR: something with the cookie?:", err)
-		switch {
-		case errors.Is(err, http.ErrNoCookie):
-			http.Error(w, "cookie not found", http.StatusUnauthorized)
-		default:
-			fmt.Println("ERROR:", err)
-			http.Error(w, "server error", http.StatusInternalServerError)
-		}
-		return
-	}
-
-	/*
 	if len(r.Header["Authorization"]) <= 0 {
 		fmt.Printf("ERROR: ServeHTTP: missing auth header\n")
 		replyError(w, http.StatusUnauthorized)
 		return
-	}*/
+	}
 
-	/* token := r.Header["Authorization"][0] */
-	ok, err := auth.ValidateAuthorization(cookie.Value)
+	token := r.Header["Authorization"][0]
+	ok, err := auth.ValidateAuthorization(token)
 	if err != nil {
 		fmt.Printf("ERROR: ServeHTTP: %s\n", err)
 		replyError(w, http.StatusInternalServerError)
 		return
 	}
 	if !ok {
-		fmt.Printf("ERROR: ServeHTTP: token unauthorized: %s\n", cookie.Value)
+		fmt.Printf("ERROR: ServeHTTP: token unauthorized: %s\n", token)
 		replyError(w, http.StatusUnauthorized)
 		return
 	}
@@ -94,6 +79,8 @@ func HandleRoot(w http.ResponseWriter, r *http.Request) {
 		HandleSignUp(w, r)
 	case "/token":
 		w.Write([]byte("seems valid"))
+	case "/logout":
+		HandleLogout(w, r)
 	default:
 		back := fmt.Sprintf("Hello World from path %s", r.URL.Path)
 		w.Write([]byte(back))
@@ -132,31 +119,17 @@ func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie := http.Cookie{
-		Name:     "token",
-		Value:    token,
-		Path:     "/",
-		SameSite: http.SameSiteNoneMode,
-		Secure: true,
-		// MaxAge:   15, // TODO make TTL a configurable param
-	}
-	http.SetCookie(w, &cookie)
-	fmt.Println("setting the cookie:", cookie)
+	w.Write([]byte(token))
+}
 
-	fmt.Println("HandleSignIn: success")
+func HandleLogout(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("attempting to logout"))
 
-	/* just write back a cookie
-	resToken := struct{
-		Token string `json:"token"`
-	}{
-		Token: token,
-	}
-	res, err := json.Marshal(resToken)
-	if err != nil {
-		fmt.Println("ERROR: HandleSignIn:", err)
+	// handler already checked for the auth token, should be safe to use here?
+	token := r.Header["Authorization"][0]
+	if err := auth.Logout(token); err != nil {
+		fmt.Println("ERROR: HandleLogout:", err)
 		replyError(w, http.StatusInternalServerError)
 		return
 	}
-	w.Write(res)
-	*/
 }

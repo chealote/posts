@@ -22,8 +22,11 @@ async function signin(event) {
     });
 
     if (response.ok) {
-      // cookie should be set here, check in index if the cookie is set
-      window.location.replace('../index.html');
+      response.text()
+        .then(token => {
+          sessionStorage.setItem('token', token);
+          window.location.replace('../index.html');
+        });
     } else {
       const errorText = document.getElementById('error-text');
       errorText.textContent = 'Signin failed. Please check your credentials.';

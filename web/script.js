@@ -4,7 +4,9 @@ const CONTENT_DIV = document.getElementById('content');
 async function fetchContent() {
   const response = await fetch(BASE_URL, {
     method: 'GET',
-    credentials: 'include',
+    headers: {
+      "Authorization": sessionStorage.getItem("token"),
+    },
   });
 
   return new Promise((resolve, reject) => {
@@ -21,16 +23,18 @@ function loadContent() {
     .then(content => {
       CONTENT_DIV.innerHTML = content;
     },
-    err => {
-      console.error("some error:", err);
-    });
+      err => {
+        console.error("some error:", err);
+      });
 }
 
 async function isLoggedIn() {
-  // TODO: check if token in localStorage is valid
+  // TODO: check if token in sessionStorage is valid
   const response = await fetch(`${BASE_URL}`, {
     method: 'GET',
-    credentials: 'include',
+    headers: {
+      "Authorization": sessionStorage.getItem("token"),
+    },
   });
 
   console.log(response);
@@ -42,16 +46,34 @@ async function isLoggedIn() {
 function redirectIfInvalidSession() {
   CONTENT_DIV.innerHTML = "loading...";
   isLoggedIn()
-  .then(ok => {
-    if (ok) {
-      loadContent();
-    } else {
-      window.location.replace('signin/signin.html');
+    .then(ok => {
+      if (ok) {
+        loadContent();
+      } else {
+        window.location.replace('signin/signin.html');
+      }
+    },
+      err => {
+        window.location.replace('signin/signin.html');
+      });
+}
+
+async function logout() {
+  const response = await fetch("http://localhost:8080/logout", {
+    headers: {
+      "Authorization": sessionStorage.getItem("token"),
     }
-  },
-  err => {
-    window.location.replace('signin/signin.html');
   });
+
+  if (response.ok) {
+    response.text()
+    .then(function(response) {
+      CONTENT_DIV.innerHTML = response;
+      window.location.replace('signin/signin.html');
+    });
+  } else {
+    CONTENT_DIV.innerHTML = "error loggin out";
+  }
 }
 
 redirectIfInvalidSession();

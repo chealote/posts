@@ -22,7 +22,6 @@ async function signup(event) {
     });
 
     if (response.ok) {
-      // cookie should be set here, check in index if the cookie is set
       window.location.replace('../index.html');
     } else {
       const errorText = document.getElementById('error-text');

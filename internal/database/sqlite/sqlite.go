@@ -128,8 +128,8 @@ func (d SQLite) checkExistingSession(username string) (bool, error) {
 	return rows.Next(), nil
 }
 
-func (d SQLite) deleteCurrentSession(username string) error {
-	query, err := d.getQuery("delete-current-session")
+func (d SQLite) deleteUserSession(username string) error {
+	query, err := d.getQuery("delete-user-session")
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func (d SQLite) CreateSession(username string, password string) (string, error) 
 		return "", err
 	}
 	if ok {
-		if err := d.deleteCurrentSession(username); err != nil {
+		if err := d.deleteUserSession(username); err != nil {
 			return "", err
 		}
 	}
@@ -160,4 +160,15 @@ func (d SQLite) CreateSession(username string, password string) (string, error) 
 	}
 	_, err = d.conn.Exec(query, username, token)
 	return token, err
+}
+
+func (d SQLite) DeleteSession(token string) error {
+	// TODO check valid token?
+	query, err := d.getQuery("delete-token-session")
+	if err != nil {
+		return err
+	}
+
+	_, err = d.conn.Exec(query, token)
+	return err
 }

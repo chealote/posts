@@ -20,4 +20,5 @@ type Implementation interface {
 	LookupSession(session string) (bool, error)
 	RegisterUser(username string, password string) error
 	CreateSession(username string, password string) (string, error)
+	DeleteSession(token string) error
 }
