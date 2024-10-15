@@ -1,8 +1,9 @@
 const BASE_URL = 'http://127.0.0.1:8080';
 const CONTENT_DIV = document.getElementById('content');
+const USERNAME_SPAN = document.getElementById('username');
 
-async function fetchContent() {
-  const response = await fetch(BASE_URL, {
+async function fetchContent(path) {
+  const response = await fetch(`${BASE_URL}${path}`, {
     method: 'GET',
     headers: {
       "Authorization": sessionStorage.getItem("token"),
@@ -17,9 +18,10 @@ async function fetchContent() {
   });
 }
 
-function loadContent() {
+function loadContent(path) {
   // handle error or something
-  const content = fetchContent()
+  CONTENT_DIV.innerHTML = "loading...";
+  const content = fetchContent(path)
     .then(content => {
       CONTENT_DIV.innerHTML = content;
     },
@@ -44,11 +46,14 @@ async function isLoggedIn() {
 }
 
 function redirectIfInvalidSession() {
-  CONTENT_DIV.innerHTML = "loading...";
   isLoggedIn()
     .then(ok => {
       if (ok) {
-        loadContent();
+        // TODO this is the username encoded
+        const token = sessionStorage.getItem("token");
+        USERNAME_SPAN.innerHTML = atob(token);
+
+        loadContent('/');
       } else {
         window.location.replace('signin/signin.html');
       }

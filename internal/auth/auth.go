@@ -1,5 +1,11 @@
 package auth
 
+import (
+	"errors"
+	"fmt"
+	"posts/internal/database"
+)
+
 var (
 	DB Database
 )
@@ -21,7 +27,11 @@ func ValidateAuthorization(session string) (bool, error) {
 
 func RegisterUser(username string, password string) error {
 	// TODO check if user exists first? in the same query?
-	return DB.RegisterUser(username, password)
+	err := DB.RegisterUser(username, password)
+	if errors.Is(err, database.ErrConstraintKey) {
+		fmt.Println("user already exists!!!!")
+	}
+	return err
 }
 
 func Login(username string, password string) (string, error) {

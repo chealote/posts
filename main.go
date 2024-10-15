@@ -1,18 +1,18 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
-	"fmt"
-	"encoding/json"
 	"posts/internal/auth"
 	"posts/internal/database/sqlite"
 	"posts/internal/handler"
 )
 
 type Config struct {
-	SQLite sqlite.Config `json:"sqlite"`
+	SQLite  sqlite.Config     `json:"sqlite"`
 	Headers map[string]string `json:"headers"`
 }
 
@@ -21,9 +21,9 @@ const (
 )
 
 var (
-	initDbFlag = flag.Bool("i", false, "initialize DB and exit")
+	initDbFlag     = flag.Bool("i", false, "initialize DB and exit")
 	configFilepath = flag.String("c", "config.json", "config variables")
-	config = Config{}
+	config         = Config{}
 )
 
 func init() {
@@ -52,12 +52,11 @@ func main() {
 		os.Exit(0)
 	}
 
-	// TODO where should DB be?
 	auth.DB = conn
 
 	m := http.NewServeMux()
 	h := handler.Handler{
-		Mux: m,
+		Mux:     m,
 		Headers: config.Headers,
 	}
 	m.HandleFunc("/", handler.HandleRoot)

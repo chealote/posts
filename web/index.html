@@ -7,8 +7,16 @@
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <a href="#" onclick="logout()">logout</a>
+    <div>
+      (<span id="username"></span>)
+      <a href="#" onclick="logout()">logout</a>
+    </div>
     <div id="content">
+    </div>
+    <div id="">
+      <a href="#" onclick="loadContent('/link1')">Link 1</a>
+      <a href="#" onclick="loadContent('/link2')">Link 2</a>
+      <a href="#" onclick="loadContent('/link3')">Link 3</a>
     </div>
   </body>
   <script src="script.js"></script>

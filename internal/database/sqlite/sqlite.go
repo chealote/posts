@@ -2,27 +2,30 @@ package sqlite
 
 import (
 	"database/sql"
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"os"
-	"errors"
+	"posts/internal/database"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var (
 	InvalidConfigError = errors.New("Invalid config")
-	ErrUnauthorized = errors.New("Unauthorized")
+	ErrUnauthorized    = errors.New("Unauthorized")
 )
 
 type Config struct {
-	Filename string `json:"filename"`
+	Filename    string `json:"filename"`
 	ScriptsPath string `json:"scriptsPath"`
 }
 
 type SQLite struct {
 	conn *sql.DB
 
-	filename string
+	filename    string
 	scriptsPath string
 }
 
@@ -86,6 +89,9 @@ func (d SQLite) RegisterUser(username, password string) error {
 		return err
 	}
 	_, err = d.conn.Exec(query, username, password)
+	if strings.Contains(err.Error(), "CONSTRAINT") {
+		return database.ErrConstraintKey
+	}
 	return err
 }
 
@@ -152,18 +158,18 @@ func (d SQLite) CreateSession(username string, password string) (string, error) 
 		}
 	}
 
-	// TODO maybe change this
-	token := "crypticToken"
+	token := base64.StdEncoding.EncodeToString([]byte(username))
+	fmt.Println("encoded session:", string(token))
+
 	query, err := d.getQuery("create-session")
 	if err != nil {
 		return "", err
 	}
 	_, err = d.conn.Exec(query, username, token)
-	return token, err
+	return string(token), err
 }
 
 func (d SQLite) DeleteSession(token string) error {
-	// TODO check valid token?
 	query, err := d.getQuery("delete-token-session")
 	if err != nil {
 		return err

@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"posts/internal/auth"
+	"time"
 )
 
 type UserCredentials struct {
-	Name string `json:"name"`
+	Name     string `json:"name"`
 	Password string `json:"password"`
 }
 
@@ -17,7 +18,7 @@ var (
 )
 
 type Handler struct {
-	Mux *http.ServeMux
+	Mux     *http.ServeMux
 	Headers map[string]string
 }
 
@@ -40,8 +41,6 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "OPTIONS" {
-		// TODO need to write something back? go just replies with 200
-		// which is ok for me
 		return
 	}
 
@@ -82,6 +81,8 @@ func HandleRoot(w http.ResponseWriter, r *http.Request) {
 	case "/logout":
 		HandleLogout(w, r)
 	default:
+		// TODO pretending to read a DB so adding some sleepy time
+		time.Sleep(time.Second)
 		back := fmt.Sprintf("Hello World from path %s", r.URL.Path)
 		w.Write([]byte(back))
 	}
