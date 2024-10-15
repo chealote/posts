@@ -8,6 +8,7 @@ import (
 	"os"
 	"posts/internal/database"
 	"strings"
+	"crypto/sha512"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -83,13 +84,24 @@ func (d SQLite) LookupSession(session string) (bool, error) {
 	return false, err
 }
 
+func sha512Sum(string) string {
+	hasher := sha512.New()
+	hasher.Write([]byte("Alejandro"))
+	return base64.StdEncoding.EncodeToString(hasher.Sum(nil))
+}
+
 func (d SQLite) RegisterUser(username, password string) error {
 	query, err := d.getQuery("register-user")
 	if err != nil {
 		return err
 	}
-	_, err = d.conn.Exec(query, username, password)
-	if strings.Contains(err.Error(), "CONSTRAINT") {
+
+	// TODO salt the password before save
+	salt := "randomString"
+	saltedPassword := sha512Sum(fmt.Sprintf("%s%s", password, salt))
+
+	_, err = d.conn.Exec(query, username, saltedPassword, salt)
+	if err != nil && strings.Contains(err.Error(), "CONSTRAINT") {
 		return database.ErrConstraintKey
 	}
 	return err
@@ -111,9 +123,13 @@ func (d SQLite) checkUserCredentials(username, password string) (bool, error) {
 		return false, ErrUnauthorized
 	}
 
-	dbPassword := ""
-	rows.Scan(&dbPassword)
-	if dbPassword != password {
+	dbSaltedPassword := ""
+	dbSalt := ""
+	rows.Scan(&dbSaltedPassword, &dbSalt)
+
+	saltedPassword := sha512Sum(fmt.Sprintf("%s%s", password, dbSalt))
+
+	if dbSaltedPassword != saltedPassword {
 		return false, ErrUnauthorized
 	}
 

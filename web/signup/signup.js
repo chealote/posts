@@ -25,7 +25,7 @@ async function signup(event) {
       window.location.replace('../index.html');
     } else {
       const errorText = document.getElementById('error-text');
-      errorText.textContent = 'Signup failed. Please check your credentials.';
+      errorText.textContent = "Signup failed. Please don't ever try again";
     }
   } catch (err) {
     const errorText = document.getElementById('error-text');

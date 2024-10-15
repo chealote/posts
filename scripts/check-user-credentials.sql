@@ -1,1 +1,1 @@
-SELECT password FROM users WHERE username = $1
+SELECT password, salt FROM users WHERE username = $1
