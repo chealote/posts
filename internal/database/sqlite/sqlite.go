@@ -2,13 +2,12 @@ package sqlite
 
 import (
 	"database/sql"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
 	"posts/internal/database"
+	"posts/internal/utils"
 	"strings"
-	"crypto/sha512"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -84,12 +83,6 @@ func (d SQLite) LookupSession(session string) (bool, error) {
 	return false, err
 }
 
-func sha512Sum(string) string {
-	hasher := sha512.New()
-	hasher.Write([]byte("Alejandro"))
-	return base64.StdEncoding.EncodeToString(hasher.Sum(nil))
-}
-
 func (d SQLite) RegisterUser(username, password string) error {
 	query, err := d.getQuery("register-user")
 	if err != nil {
@@ -98,7 +91,7 @@ func (d SQLite) RegisterUser(username, password string) error {
 
 	// TODO salt the password before save
 	salt := "randomString"
-	saltedPassword := sha512Sum(fmt.Sprintf("%s%s", password, salt))
+	saltedPassword := utils.Sha512Sum(fmt.Sprintf("%s%s", password, salt))
 
 	_, err = d.conn.Exec(query, username, saltedPassword, salt)
 	if err != nil && strings.Contains(err.Error(), "CONSTRAINT") {
@@ -127,7 +120,7 @@ func (d SQLite) checkUserCredentials(username, password string) (bool, error) {
 	dbSalt := ""
 	rows.Scan(&dbSaltedPassword, &dbSalt)
 
-	saltedPassword := sha512Sum(fmt.Sprintf("%s%s", password, dbSalt))
+	saltedPassword := utils.Sha512Sum(fmt.Sprintf("%s%s", password, dbSalt))
 
 	if dbSaltedPassword != saltedPassword {
 		return false, ErrUnauthorized
@@ -159,30 +152,31 @@ func (d SQLite) deleteUserSession(username string) error {
 	return err
 }
 
-func (d SQLite) CreateSession(username string, password string) (string, error) {
-	if ok, err := d.checkUserCredentials(username, password); err != nil || !ok {
-		return "", err
-	}
+func (d SQLite) CheckValidUserCredentials(username string, password string) (bool, error) {
+	return d.checkUserCredentials(username, password)
+}
 
+func (d SQLite) CreateReplaceSession(username string, session string) error {
 	ok, err := d.checkExistingSession(username)
 	if err != nil {
-		return "", err
+		return err
 	}
 	if ok {
 		if err := d.deleteUserSession(username); err != nil {
-			return "", err
+			return err
 		}
 	}
 
+	/*
 	token := base64.StdEncoding.EncodeToString([]byte(username))
-	fmt.Println("encoded session:", string(token))
+	*/
 
 	query, err := d.getQuery("create-session")
 	if err != nil {
-		return "", err
+		return err
 	}
-	_, err = d.conn.Exec(query, username, token)
-	return string(token), err
+	_, err = d.conn.Exec(query, username, session)
+	return err
 }
 
 func (d SQLite) DeleteSession(token string) error {
@@ -193,4 +187,25 @@ func (d SQLite) DeleteSession(token string) error {
 
 	_, err = d.conn.Exec(query, token)
 	return err
+}
+
+func (d SQLite) ListPosts() ([]string, error) {
+	query, err := d.getQuery("list-posts")
+	if err != nil {
+		return []string{}, err
+	}
+
+	rows, err := d.conn.Query(query)
+	if err != nil {
+		return []string{}, err
+	}
+
+	titles := []string{}
+	title := ""
+	for rows.Next() {
+		rows.Scan(&title)
+		titles = append(titles, title)
+	}
+
+	return titles, nil
 }

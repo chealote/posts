@@ -3,7 +3,9 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"time"
 	"posts/internal/database"
+	"posts/internal/utils"
 )
 
 var (
@@ -11,10 +13,11 @@ var (
 )
 
 type Database interface {
-	CreateSession(string, string) (string, error)
+	CreateReplaceSession(string, string) error
 	LookupSession(string) (bool, error)
 	RegisterUser(string, string) error
 	DeleteSession(string) error
+	CheckValidUserCredentials(string, string) (bool, error)
 }
 
 func ValidateAuthorization(session string) (bool, error) {
@@ -26,16 +29,24 @@ func ValidateAuthorization(session string) (bool, error) {
 }
 
 func RegisterUser(username string, password string) error {
-	// TODO check if user exists first? in the same query?
 	err := DB.RegisterUser(username, password)
+	// TODO this is a debug check only, just return error without checking
 	if errors.Is(err, database.ErrConstraintKey) {
-		fmt.Println("user already exists!!!!")
+		fmt.Println("user already exists!")
 	}
 	return err
 }
 
 func Login(username string, password string) (string, error) {
-	return DB.CreateSession(username, password)
+	ok, err := DB.CheckValidUserCredentials(username, password)
+	if err != nil || !ok {
+		// TODO return 500 or 401 if !ok
+		return "", err
+	}
+
+	epochNow := fmt.Sprintf("%s", time.Now().Unix())
+	token := utils.Sha512Sum(fmt.Sprintf("%s%s", username, epochNow))
+	return token, DB.CreateReplaceSession(username, token)
 }
 
 func Logout(token string) error {
