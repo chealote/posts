@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="sign.css">
+    <style>
+      .invalid-input {
+          border-color: red;
+      }
+      .error-div {
+          color: red;
+          font-size: small;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="#" id="switch-link" onclick="render()"></a>
+    <form id="sign-form" onsubmit="sign(event)">
+      <h1 id="h1"></h1>
+      <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" onkeyup="validateUsername()" required>
+        <label for="username" id="error-username-div" class="error-div"></label>
+      </div>
+
+      <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" onkeyup="validatePassword()" required>
+        <label for="password" id="error-password-div" class="error-div"></label>
+      </div>
+
+      <button type="submit" id="button"></button>
+      <div id="error-text" class="error"></div>
+    </form>
+    <div id="error-div"></div>
+  </body>
+  <script src="sign.js"></script>
+</html>
