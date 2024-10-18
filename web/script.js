@@ -20,6 +20,9 @@ async function fetchContent(path) {
 
 function loadContent(path) {
   // handle error or something
+  if (!path || path === '') {
+    path = "/";
+  }
   CONTENT_DIV.innerHTML = "loading...";
   const content = fetchContent(path)
     .then(content => {
@@ -53,18 +56,18 @@ function redirectIfInvalidSession() {
         const token = sessionStorage.getItem("token");
         USERNAME_SPAN.innerHTML = atob(token);
 
-        loadContent('/');
+        loadContent();
       } else {
-        window.location.replace('signin/signin.html');
+        window.location.replace('sign/sign.html');
       }
     },
       err => {
-        window.location.replace('signin/signin.html');
+        window.location.replace('sign/sign.html');
       });
 }
 
 async function logout() {
-  const response = await fetch("http://localhost:8080/logout", {
+  const response = await fetch(`${BASE_URL}/logout`, {
     headers: {
       "Authorization": sessionStorage.getItem("token"),
     }
@@ -74,7 +77,7 @@ async function logout() {
     response.text()
     .then(function(response) {
       CONTENT_DIV.innerHTML = response;
-      window.location.replace('signin/signin.html');
+      window.location.replace('sign/sign.html');
     });
   } else {
     CONTENT_DIV.innerHTML = "error loggin out";
