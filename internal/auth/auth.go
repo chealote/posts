@@ -3,9 +3,9 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"time"
 	"posts/internal/database"
 	"posts/internal/utils"
+	"time"
 )
 
 var (
@@ -44,7 +44,7 @@ func Login(username string, password string) (string, error) {
 		return "", err
 	}
 
-	epochNow := fmt.Sprintf("%s", time.Now().Unix())
+	epochNow := fmt.Sprintf("%d", time.Now().Unix())
 	token := utils.Sha512Sum(fmt.Sprintf("%s%s", username, epochNow))
 	return token, DB.CreateReplaceSession(username, token)
 }

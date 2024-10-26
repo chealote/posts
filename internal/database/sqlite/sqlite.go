@@ -167,10 +167,6 @@ func (d SQLite) CreateReplaceSession(username string, session string) error {
 		}
 	}
 
-	/*
-	token := base64.StdEncoding.EncodeToString([]byte(username))
-	*/
-
 	query, err := d.getQuery("create-session")
 	if err != nil {
 		return err
@@ -189,8 +185,8 @@ func (d SQLite) DeleteSession(token string) error {
 	return err
 }
 
-func (d SQLite) ListPosts() ([]string, error) {
-	query, err := d.getQuery("list-posts")
+func (d SQLite) ListPostTitles() ([]string, error) {
+	query, err := d.getQuery("list-post-titles")
 	if err != nil {
 		return []string{}, err
 	}
@@ -208,4 +204,14 @@ func (d SQLite) ListPosts() ([]string, error) {
 	}
 
 	return titles, nil
+}
+
+func (d SQLite) CreatePost(title string) error {
+	query, err := d.getQuery("create-post")
+	if err != nil {
+		return err
+	}
+
+	_, err = d.conn.Exec(query, title)
+	return err
 }

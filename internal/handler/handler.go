@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"posts/internal/auth"
-	"time"
 )
 
 type UserCredentials struct {
@@ -80,11 +79,11 @@ func HandleRoot(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("seems valid"))
 	case "/logout":
 		HandleLogout(w, r)
+	case "/posts":
+		HandlePosts(w, r)
 	default:
-		// TODO pretending to read a DB so adding some sleepy time
-		time.Sleep(time.Second)
-		back := fmt.Sprintf("Hello World from path %s", r.URL.Path)
-		w.Write([]byte(back))
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(http.StatusText(http.StatusBadRequest)))
 	}
 }
 
@@ -133,4 +132,12 @@ func HandleLogout(w http.ResponseWriter, r *http.Request) {
 		replyError(w, http.StatusInternalServerError)
 		return
 	}
+}
+
+func HandlePosts(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(http.StatusText(http.StatusBadRequest)))
+	}
+
 }
