@@ -42,27 +42,33 @@ async function isLoggedIn() {
     },
   });
 
-  console.log(response);
   return new Promise((resolve, reject) => {
     return resolve(response.ok);
   });
 }
 
-function redirectIfInvalidSession() {
-  isLoggedIn()
-    .then(ok => {
-      if (ok) {
-        // TODO this is the username encoded
-        const token = sessionStorage.getItem("token");
-        USERNAME_SPAN.innerHTML = atob(token);
+function userinfo() {
+  const userinfo = sessionStorage.getItem("userinfo");
+  return JSON.parse(userinfo);
+}
 
-        loadContent();
-      } else {
-        window.location.replace('sign/sign.html');
-      }
-    },
+function redirectIfInvalidSession() {
+  const redirectPath = "sign/sign.html";
+  const user = userinfo();
+  if (!user) {
+    window.location.replace(redirectPath);
+  }
+
+  USERNAME_SPAN.innerHTML = user.name;
+  isLoggedIn()
+    .then(
+      ok => {
+        if (!ok) {
+          window.location.replace(redirectPath);
+        }
+      },
       err => {
-        window.location.replace('sign/sign.html');
+        window.location.replace(redirectPath);
       });
 }
 
@@ -84,4 +90,28 @@ async function logout() {
   }
 }
 
+async function listPosts() {
+  const response = await fetch(`${BASE_URL}/posts`, {
+    headers: {
+      "Authorization": sessionStorage.getItem("token"),
+    }
+  });
+
+  if (! response.ok) {
+    return;
+  }
+  console.log("response from listPosts:", response);
+
+  const postListDiv = document.getElementById("post-list");
+  const postList = await response.json();
+  for (const post of postList) {
+    const link = document.createElement("a");
+    link.href = "#";
+    link.innerHTML = post.title;
+
+    postListDiv.appendChild(link);
+  }
+}
+
 redirectIfInvalidSession();
+listPosts();

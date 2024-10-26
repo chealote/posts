@@ -13,7 +13,6 @@ function render() {
 
   const switchLink = document.getElementById("switch-link");
   switchLink.innerText = altText;
-  console.log(switchLink, switchLink.onClick);
 
   const text = `Sign ${CURRENT_TYPE}`;
   document.title = text;
@@ -26,7 +25,6 @@ function render() {
 
   const endpoint = `sign${CURRENT_TYPE}`;
   REMOTE_URL = `${BASE_URL}/${endpoint}`;
-  console.log("going to hit:", REMOTE_URL);
 
   CURRENT_TYPE = alt;
 }
@@ -36,6 +34,10 @@ async function sign(event) {
 
   const username = USER_INPUT.value;
   const password = PASSWORD_INPUT.value;
+  const user = JSON.stringify({
+    'name': username,
+    'password': password,
+  });
 
   try {
     const response = await fetch(`${REMOTE_URL}`, {
@@ -45,16 +47,14 @@ async function sign(event) {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': 'index.html',
       },
-      body: JSON.stringify({
-        'name': username,
-        'password': password,
-      })
+      body: user,
     });
 
     if (response.ok) {
       response.text()
         .then(token => {
           sessionStorage.setItem('token', token);
+	  sessionStorage.setItem('userinfo', user);
           window.location.replace('../index.html');
         });
     } else {
