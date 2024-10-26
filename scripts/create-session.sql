@@ -1,1 +1,1 @@
-INSERT INTO sessions VALUES ($1, $2, DATETIME('now', '+15 seconds'))
+INSERT INTO sessions VALUES ($1, $2, DATETIME('now', '+300 seconds'))
