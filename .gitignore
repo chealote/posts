@@ -1,0 +1,9 @@
+*
+
+!.gitignore
+!*.go
+!*.html
+!*.css
+!*.js
+!*.json
+!*/
