@@ -39,9 +39,12 @@ func RegisterUser(username string, password string) error {
 
 func Login(username string, password string) (string, error) {
 	ok, err := DB.CheckValidUserCredentials(username, password)
-	if err != nil || !ok {
-		// TODO return 500 or 401 if !ok
+	if err != nil {
 		return "", err
+	}
+	if !ok {
+		// TODO return 500 or 401 if !ok
+		return "", fmt.Errorf("login is invalid")
 	}
 
 	epochNow := fmt.Sprintf("%d", time.Now().Unix())

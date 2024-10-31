@@ -84,7 +84,6 @@ func (d SQLite) LookupSession(session string) (bool, error) {
 	rows.Scan(&token, &expires, &now)
 	fmt.Printf("LookupSession: session=%s expires='%s' now='%s'\n", session, expires, now)
 	return true, nil
-	}
 }
 
 func (d SQLite) RegisterUser(username, password string) error {
