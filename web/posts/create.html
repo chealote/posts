@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>create post</title>
+    <style>
+      .invalid {
+          border-color: red;
+      }
+      .error-div {
+          color: red;
+          font-size: small;
+      }
+
+    </style>
+  </head>
+  <body>
+    (<span id="username-span"></span>)
+    <a href="#" onclick="logout()">logout</a>
+    <br/>
+    <label for="title">Title</label>
+    <input type="text" name="title" id="title" />
+    <br/>
+    <label for="title">Content</label>
+    <textarea type="text" name="content" id="post"></textarea>
+    <br/>
+    <input type="submit" value="Create" onclick="create()"/>
+  </body>
+  <script src="../auth-guard.js"></script>
+  <script src="posts.js"></script>
+</html>
