@@ -53,7 +53,7 @@ func Connect(config Config) (SQLite, error) {
 }
 
 func (d SQLite) getQuery(script string) (string, error) {
-	fmt.Println("SOME CONFIG:", d.filename, d.scriptsPath)
+	fmt.Println("getQuery: config info: ", d.filename, d.scriptsPath)
 	filepath := fmt.Sprintf("%s/%s.sql", d.scriptsPath, script)
 	content, err := os.ReadFile(filepath)
 	fmt.Printf("getQuery(): FILE: %s -- QUERY: %s\n", filepath, string(content))
@@ -65,22 +65,26 @@ func (d SQLite) LookupSession(session string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	rows, err := d.conn.Query(query, session)
 	if err != nil {
 		fmt.Println("ERROR: LookupSession:", err)
 		return false, err
 	}
 	defer rows.Close()
+
 	token := ""
 	expires := ""
 	now := ""
-	for rows.Next() {
-		rows.Scan(&token, &expires, &now)
-		fmt.Printf("LookupSession: session=%s expires='%s' now='%s'\n", session, expires, now)
-		return true, nil
+	if !rows.Next() {
+		fmt.Printf("LookupSession: no session found: %s\n", session)
+		return false, err
 	}
-	fmt.Printf("LookupSession: no session found: %s\n", session)
-	return false, err
+
+	rows.Scan(&token, &expires, &now)
+	fmt.Printf("LookupSession: session=%s expires='%s' now='%s'\n", session, expires, now)
+	return true, nil
+	}
 }
 
 func (d SQLite) RegisterUser(username, password string) error {

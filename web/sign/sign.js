@@ -26,6 +26,9 @@ function render() {
   const endpoint = `sign${CURRENT_TYPE}`;
   REMOTE_URL = `${BASE_URL}/${endpoint}`;
 
+  USER_INPUT.value = "";
+  PASSWORD_INPUT.value = "";
+
   CURRENT_TYPE = alt;
 }
 
