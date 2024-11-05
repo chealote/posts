@@ -8,11 +8,7 @@ import (
 	"time"
 )
 
-var (
-	DB Database
-)
-
-type Database interface {
+type AuthDatabase interface {
 	CreateReplaceSession(string, string) error
 	LookupSession(string) (bool, error)
 	RegisterUser(string, string) error
@@ -20,8 +16,12 @@ type Database interface {
 	CheckValidUserCredentials(string, string) (bool, error)
 }
 
+var (
+	AuthDb AuthDatabase
+)
+
 func ValidateAuthorization(session string) (bool, error) {
-	ok, err := DB.LookupSession(session)
+	ok, err := AuthDb.LookupSession(session)
 	if err != nil {
 		return false, err
 	}
@@ -29,7 +29,7 @@ func ValidateAuthorization(session string) (bool, error) {
 }
 
 func RegisterUser(username string, password string) error {
-	err := DB.RegisterUser(username, password)
+	err := AuthDb.RegisterUser(username, password)
 	// TODO this is a debug check only, just return error without checking
 	if errors.Is(err, database.ErrConstraintKey) {
 		fmt.Println("user already exists!")
@@ -38,7 +38,7 @@ func RegisterUser(username string, password string) error {
 }
 
 func Login(username string, password string) (string, error) {
-	ok, err := DB.CheckValidUserCredentials(username, password)
+	ok, err := AuthDb.CheckValidUserCredentials(username, password)
 	if err != nil {
 		return "", err
 	}
@@ -49,9 +49,9 @@ func Login(username string, password string) (string, error) {
 
 	epochNow := fmt.Sprintf("%d", time.Now().Unix())
 	token := utils.Sha512Sum(fmt.Sprintf("%s%s", username, epochNow))
-	return token, DB.CreateReplaceSession(username, token)
+	return token, AuthDb.CreateReplaceSession(username, token)
 }
 
 func Logout(token string) error {
-	return DB.DeleteSession(token)
+	return AuthDb.DeleteSession(token)
 }

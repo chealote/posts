@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"posts/internal/database"
+	"posts/internal/handler"
 	"posts/internal/utils"
 	"strings"
 
@@ -188,33 +189,59 @@ func (d SQLite) DeleteSession(token string) error {
 	return err
 }
 
-func (d SQLite) ListPostTitles() ([]string, error) {
-	query, err := d.getQuery("list-post-titles")
+func (d SQLite) ListWithId() ([]handler.PostWithId, error) {
+	query, err := d.getQuery("list-post-titles-ids")
 	if err != nil {
-		return []string{}, err
+		return []handler.PostWithId{}, err
 	}
 
 	rows, err := d.conn.Query(query)
 	if err != nil {
-		return []string{}, err
+		return []handler.PostWithId{}, err
 	}
 
-	titles := []string{}
+	titles := []handler.PostWithId{}
 	title := ""
+	id := ""
 	for rows.Next() {
-		rows.Scan(&title)
-		titles = append(titles, title)
+		rows.Scan(&id, &title)
+		titles = append(titles, handler.PostWithId{
+			Id:    id,
+			Title: title,
+		})
 	}
 
 	return titles, nil
 }
 
-func (d SQLite) CreatePost(title string) error {
+func (d SQLite) CreatePost(postId string, title string, post string) error {
+
 	query, err := d.getQuery("create-post")
 	if err != nil {
 		return err
 	}
 
-	_, err = d.conn.Exec(query, title)
+	_, err = d.conn.Exec(query, postId, title, post)
 	return err
+}
+
+func (d SQLite) ContentsPost(id string) (string, error) {
+	query, err := d.getQuery("get-post-contents")
+	if err != nil {
+		return "", err
+	}
+
+	rows, err := d.conn.Query(query, id)
+	if err != nil {
+		return "", err
+	}
+
+	if !rows.Next() {
+		return "", fmt.Errorf("empty response")
+	}
+
+	contents := ""
+	rows.Scan(&contents)
+
+	return contents, err
 }

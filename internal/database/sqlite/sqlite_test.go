@@ -7,6 +7,7 @@ import (
 	"posts/internal/utils"
 	"testing"
 	"time"
+	"posts/internal/handler"
 )
 
 var (
@@ -54,30 +55,45 @@ func cleanup() {
 }
 
 func Test_CreatePost(t *testing.T) {
-	expectedPosts := []string{
-		"First post",
-		"Second post",
-		"Third post",
+	expectedPosts := []struct {
+		id    string
+		title string
+		post  string
+	}{
+		{
+			"123",
+			"First post",
+			"Content of the first post",
+		},
+		{
+			"456",
+			"Second post",
+			"Content of the second post",
+		},
 	}
 
 	for _, post := range expectedPosts {
-		if err := conn.CreatePost(post); err != nil {
-			t.Fatalf("failed to create post %s: %s", post, err)
+		if err := conn.CreatePost(post.id, post.title, post.post); err != nil {
+			t.Fatalf("failed to create post %s: %s", post.id, err)
 		}
 	}
 
 	i := 0
-	rows, err := dbConn.Query("SELECT title FROM posts")
+	rows, err := dbConn.Query("SELECT id, title, post FROM posts")
 	if err != nil {
-		t.Fatalf("error querying posts")
+		t.Fatalf("error querying posts: %s", err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
+		id := ""
+		title := ""
 		post := ""
-		rows.Scan(&post)
-		if post != expectedPosts[i] {
-			t.Fatalf("post %d don't match: %s != %s", i, post, expectedPosts)
+		rows.Scan(&id, &title, &post)
+		if id != expectedPosts[i].id &&
+			title != expectedPosts[i].title &&
+			post != expectedPosts[i].post {
+			t.Fatalf("post %d don't match: %s != %s", i, id, expectedPosts[i].id)
 		}
 
 		i++
@@ -90,33 +106,58 @@ func Test_CreatePost(t *testing.T) {
 	cleanup()
 }
 
-func Test_ListPostTitles(t *testing.T) {
-	expectedPosts := []string{
-		"First post",
-		"Second post",
-		"Third post",
+func Test_ListPostWithIds(t *testing.T) {
+	expectedPosts := []handler.PostWithId{
+		{
+			Id: "1",
+			Title: "First Post",
+		},
+		{
+			Id: "2",
+			Title: "Second post",
+		},
+		{
+			Id: "3",
+			Title: "Third post",
+		},
 	}
 
 	for _, post := range expectedPosts {
-		query := fmt.Sprintf("INSERT INTO posts(title) VALUES ('%s')", post)
+		query := fmt.Sprintf("INSERT INTO posts(id, title) VALUES ('%s', '%s')", post.Id, post.Title)
 		_, err := dbConn.Exec(query)
 		if err != nil {
 			t.Errorf("failed to create post %s: %s", post, err)
 		}
 	}
 
-	titles, err := conn.ListPostTitles()
+	rows, err := dbConn.Query("SELECT id FROM posts")
+	if err != nil {
+		t.Errorf("failed retrieving ids from created posts")
+	}
+
+	ids := []string{}
+	for rows.Next() {
+		id := ""
+		rows.Scan(&id)
+		ids = append(ids, id)
+	}
+
+	if len(ids) != len(expectedPosts) {
+		t.Errorf("len of ids don't match with len of expected posts")
+	}
+
+	posts, err := conn.ListWithId()
 	if err != nil {
 		t.Errorf("ListPostTitles returned an error: %v", err)
 	}
 
-	if len(titles) != len(expectedPosts) {
-		t.Errorf("expected %d titles, got %d", len(expectedPosts), len(titles))
+	if len(posts) != len(expectedPosts) {
+		t.Errorf("expected %d titles, got %d", len(expectedPosts), len(posts))
 	}
 
-	for i, title := range titles {
-		if title != expectedPosts[i] {
-			t.Errorf("posts don't match %d to be %q, got %q", i, expectedPosts[i], title)
+	for i, post := range posts {
+		if post.Title != expectedPosts[i].Title || post.Id != ids[i] {
+			t.Errorf("posts %d don't match: expect=%q, got=%q", i, expectedPosts[i], post)
 		}
 	}
 

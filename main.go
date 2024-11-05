@@ -52,7 +52,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	auth.DB = conn
+	auth.AuthDb = conn
+	handler.PostDb = conn
 
 	m := http.NewServeMux()
 	h := handler.Handler{
