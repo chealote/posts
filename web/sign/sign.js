@@ -6,8 +6,12 @@ const ERROR_TEXT = document.getElementById('error-text');
 
 let REMOTE_URL = "";
 let CURRENT_TYPE = "in";
+let NEXT_TYPE = undefined;
 
 function render() {
+  if (NEXT_TYPE) {
+    CURRENT_TYPE = NEXT_TYPE;
+  }
   const alt = CURRENT_TYPE === "in" ? "up" : "in";
   const altText = `Sign ${alt}`;
 
@@ -29,7 +33,7 @@ function render() {
   USER_INPUT.value = "";
   PASSWORD_INPUT.value = "";
 
-  CURRENT_TYPE = alt;
+  NEXT_TYPE = alt;
 }
 
 async function sign(event) {
@@ -57,8 +61,13 @@ async function sign(event) {
       response.text()
         .then(token => {
           sessionStorage.setItem('token', token);
-	  sessionStorage.setItem('userinfo', user);
-          window.location.replace('../index.html');
+          sessionStorage.setItem('userinfo', user);
+          if (CURRENT_TYPE == "in") {
+            window.location.replace('../index.html');
+          } else {
+            CURRENT_TYPE = "in"
+            window.location.replace('sign.html');
+          }
         });
     } else {
       ERROR_TEXT.textContent = `Sign${CURRENT_TYPE} failed. Please check your credentials.`;
@@ -114,4 +123,4 @@ function isValidForm() {
 USER_INPUT.value = "";
 PASSWORD_INPUT.value = "";
 isValidForm();
-render("in");
+render();

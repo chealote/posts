@@ -39,15 +39,13 @@ async function logout() {
 
   if (response.ok) {
     window.location.replace('/');
-    console.log("this is the replace:", window.location);
   } else {
     console.log("error loggin out");
   }
 }
 
 async function isLoggedIn() {
-  // TODO: check if token in sessionStorage is valid
-  const response = await fetch(`${BASE_URL}`, {
+  const response = await fetch(`${BASE_URL}/token`, {
     method: 'GET',
     headers: {
       "Authorization": sessionStorage.getItem("token"),
@@ -58,6 +56,5 @@ async function isLoggedIn() {
     return resolve(response.ok);
   });
 }
-
 
 redirectIfInvalidSession();

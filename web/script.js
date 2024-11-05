@@ -1,8 +1,8 @@
-const CONTENT_DIV = document.getElementById('content');
+const CONTENT_DIV = document.getElementById("content");
 
 async function fetchContent(path) {
   const response = await fetch(`${BASE_URL}${path}`, {
-    method: 'GET',
+    method: "GET",
     headers: {
       "Authorization": sessionStorage.getItem("token"),
     },
@@ -12,13 +12,12 @@ async function fetchContent(path) {
     if (response.ok) {
       return resolve(response.text());
     }
-    reject('auth failed?');
+    reject("auth failed?");
   });
 }
 
 function loadContent(path) {
-  // handle error or something
-  if (!path || path === '') {
+  if (!path || path === "") {
     path = "/";
   }
   CONTENT_DIV.innerHTML = "loading...";
@@ -41,16 +40,18 @@ async function listPosts() {
   if (! response.ok) {
     return;
   }
-  console.log("response from listPosts:", response);
 
   const postListDiv = document.getElementById("post-list");
   const postList = await response.json();
+  const newline = document.createElement("br");
   for (const post of postList) {
     const link = document.createElement("a");
-    link.href = "#";
+    link.href = `posts/view.html?title=${post.id}`;
     link.innerHTML = post.title;
+    const item = document.createElement("li");
+    item.appendChild(link);
 
-    postListDiv.appendChild(link);
+    postListDiv.appendChild(item);
   }
 }
 

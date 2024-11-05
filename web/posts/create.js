@@ -14,12 +14,26 @@ function ensureNotEmpty(input) {
   }
 }
 
-function create() {
+async function create() {
   ensureNotEmpty(TITLE_INPUT);
   ensureNotEmpty(POST_INPUT);
+
   const isFormValid = !TITLE_INPUT.invalid && !POST_INPUT.invalid;
   if (!isFormValid) {
     return;
   }
-  console.log("creating a post!");
+
+  const response = await fetch(`${BASE_URL}/posts`, {
+    method: "POST",
+    headers: {
+      "Authorization": sessionStorage.getItem("token"),
+    },
+    body: JSON.stringify({
+      title: TITLE_INPUT.value,
+      post: POST_INPUT.value,
+    }),
+  });
+  if (response.ok) {
+    window.location.replace("/");
+  }
 }
