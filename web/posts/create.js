@@ -34,6 +34,6 @@ async function create() {
     }),
   });
   if (response.ok) {
-    window.location.replace("/");
+    authRedirect("/");
   }
 }

@@ -1,3 +1,4 @@
+const HEADER = document.getElementById("header");
 const URL_PARAMS = new URLSearchParams(window.location.search);
 const TITLE_PARAM = URL_PARAMS.get("title");
 const TITLE_ITEM = document.getElementById("title");
@@ -20,8 +21,11 @@ async function fetchPostContent() {
 
   // a json string is a valid json?
   const postContent = await response.json();
+  TITLE_ITEM.innerHTML = postContent.title;
+  POST_ITEM.value = postContent.contents;
+  console.log(POST_ITEM);
 
-  POST_ITEM.value = postContent;
+  console.log("the post content:", postContent);
 }
 
 fetchPostContent();

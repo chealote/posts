@@ -5,15 +5,18 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>view</title>
+    <style>
+      textarea {
+          width: 60%;
+          height: 500px;
+          color: black;
+      }
+    </style>
   </head>
   <body>
-    <div>
-      (<span id="username-span"></span>)
-      <a href="#" onclick="logout()">logout</a>
-      <a href="/posts/create.html">create new</a>
-    </div>
+    <div id="header"></div>
     <h1 id="title"></h1>
-    <div id="post"></div>
+    <textarea id="post" disabled></textarea>
   </body>
   <script src="../auth-guard.js"></script>
   <script src="./view.js"></script>
