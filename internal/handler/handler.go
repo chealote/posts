@@ -3,9 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"net/http"
 	"posts/internal/auth"
+	"regexp"
 	"strings"
 )
 
@@ -24,17 +24,22 @@ type PostWithId struct {
 	Title string `json:"title"`
 }
 
+type PostContent struct {
+	Title string `json:"title"`
+	Contents string `json:"contents"`
+}
+
 type PostDatabase interface {
 	CreatePost(string, string, string) error
 	ListWithId() ([]PostWithId, error)
-	ContentsPost(string) (string, error)
+	ContentsPost(string) (PostContent, error)
 }
 
 var (
 	PostDb PostDatabase
 
 	ignoreAuthFromPaths = []string{"/signup", "/signin"}
-	rePostIdValidChars = regexp.MustCompile("[^a-zA-Z0-9]+")
+	rePostIdValidChars  = regexp.MustCompile("[^a-zA-Z0-9]+")
 )
 
 func replyError(w http.ResponseWriter, code int) {
@@ -90,7 +95,7 @@ func HandleRoot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pieces := strings.Split(r.URL.Path, "/")
-	if len(pieces) > 1 {
+	if len(pieces) < 2 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(http.StatusText(http.StatusBadRequest)))
 		return
@@ -111,7 +116,6 @@ func HandleRoot(w http.ResponseWriter, r *http.Request) {
 		} else {
 			HandlePostRoot(w, r)
 		}
-
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(http.StatusText(http.StatusBadRequest)))
@@ -169,7 +173,7 @@ func HandlePostRoot(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		post := struct {
-			Id string `json:"id"`
+			Id    string `json:"id"`
 			Title string `json:"title"`
 			Post  string `json:"post"`
 		}{}

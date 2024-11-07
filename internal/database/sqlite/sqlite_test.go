@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"posts/internal/handler"
 	"posts/internal/utils"
 	"testing"
 	"time"
-	"posts/internal/handler"
 )
 
 var (
@@ -109,15 +109,15 @@ func Test_CreatePost(t *testing.T) {
 func Test_ListPostWithIds(t *testing.T) {
 	expectedPosts := []handler.PostWithId{
 		{
-			Id: "1",
+			Id:    "1",
 			Title: "First Post",
 		},
 		{
-			Id: "2",
+			Id:    "2",
 			Title: "Second post",
 		},
 		{
-			Id: "3",
+			Id:    "3",
 			Title: "Third post",
 		},
 	}

@@ -53,6 +53,10 @@ func Connect(config Config) (SQLite, error) {
 	return SQLite{conn, config.Filename, config.ScriptsPath}, err
 }
 
+func (d SQLite) Close() {
+	d.conn.Close()
+}
+
 func (d SQLite) getQuery(script string) (string, error) {
 	fmt.Println("getQuery: config info: ", d.filename, d.scriptsPath)
 	filepath := fmt.Sprintf("%s/%s.sql", d.scriptsPath, script)
@@ -199,6 +203,7 @@ func (d SQLite) ListWithId() ([]handler.PostWithId, error) {
 	if err != nil {
 		return []handler.PostWithId{}, err
 	}
+	defer rows.Close()
 
 	titles := []handler.PostWithId{}
 	title := ""
@@ -225,23 +230,28 @@ func (d SQLite) CreatePost(postId string, title string, post string) error {
 	return err
 }
 
-func (d SQLite) ContentsPost(id string) (string, error) {
+func (d SQLite) ContentsPost(id string) (handler.PostContent, error) {
 	query, err := d.getQuery("get-post-contents")
 	if err != nil {
-		return "", err
+		return handler.PostContent{}, err
 	}
 
 	rows, err := d.conn.Query(query, id)
 	if err != nil {
-		return "", err
+		return handler.PostContent{}, err
 	}
+	defer rows.Close()
 
 	if !rows.Next() {
-		return "", fmt.Errorf("empty response")
+		return handler.PostContent{}, fmt.Errorf("empty response")
 	}
 
+	title := ""
 	contents := ""
-	rows.Scan(&contents)
+	rows.Scan(&title, &contents)
 
-	return contents, err
+	return handler.PostContent{
+		Title: title,
+		Contents: contents,
+	}, err
 }
