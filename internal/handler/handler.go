@@ -25,8 +25,14 @@ type PostWithId struct {
 }
 
 type PostContent struct {
-	Title string `json:"title"`
+	Title    string `json:"title"`
 	Contents string `json:"contents"`
+}
+
+type PostCreate struct {
+	Id    string `json:"id"`
+	Title string `json:"title"`
+	Post  string `json:"post"`
 }
 
 type PostDatabase interface {
@@ -172,11 +178,7 @@ func HandleLogout(w http.ResponseWriter, r *http.Request) {
 func HandlePostRoot(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
-		post := struct {
-			Id    string `json:"id"`
-			Title string `json:"title"`
-			Post  string `json:"post"`
-		}{}
+		post := PostCreate{}
 
 		if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
 			fmt.Println("ERROR: HandleSignIn Decode JSON:", err)
@@ -206,6 +208,7 @@ func HandlePostRoot(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		w.WriteHeader(http.StatusOK)
 		w.Write(b)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
@@ -232,6 +235,5 @@ func HandlePostWithId(w http.ResponseWriter, r *http.Request, postId string) {
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(http.StatusText(http.StatusBadRequest)))
-
 	}
 }

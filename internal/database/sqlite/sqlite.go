@@ -30,16 +30,6 @@ type SQLite struct {
 	scriptsPath string
 }
 
-func (d SQLite) Initialize() error {
-	query, err := d.getQuery("initialize")
-	if err != nil {
-		return err
-	}
-
-	_, err = d.conn.Exec(query)
-	return err
-}
-
 func Connect(config Config) (SQLite, error) {
 	if config.Filename == "" || config.ScriptsPath == "" {
 		return SQLite{}, InvalidConfigError
@@ -51,6 +41,16 @@ func Connect(config Config) (SQLite, error) {
 	}
 
 	return SQLite{conn, config.Filename, config.ScriptsPath}, err
+}
+
+func (d SQLite) Initialize() error {
+	query, err := d.getQuery("initialize")
+	if err != nil {
+		return err
+	}
+
+	_, err = d.conn.Exec(query)
+	return err
 }
 
 func (d SQLite) Close() {
@@ -91,7 +91,7 @@ func (d SQLite) LookupSession(session string) (bool, error) {
 	return true, nil
 }
 
-func (d SQLite) RegisterUser(username, password string) error {
+func (d SQLite) RegisterUser(username, password, roles string) error {
 	query, err := d.getQuery("register-user")
 	if err != nil {
 		return err
@@ -101,7 +101,7 @@ func (d SQLite) RegisterUser(username, password string) error {
 	salt := "randomString"
 	saltedPassword := utils.Sha512Sum(fmt.Sprintf("%s%s", password, salt))
 
-	_, err = d.conn.Exec(query, username, saltedPassword, salt)
+	_, err = d.conn.Exec(query, username, saltedPassword, salt, roles)
 	if err != nil && strings.Contains(err.Error(), "CONSTRAINT") {
 		return database.ErrConstraintKey
 	}
@@ -248,10 +248,30 @@ func (d SQLite) ContentsPost(id string) (handler.PostContent, error) {
 
 	title := ""
 	contents := ""
-	rows.Scan(&title, &contents)
+	err = rows.Scan(&title, &contents)
 
 	return handler.PostContent{
-		Title: title,
+		Title:    title,
 		Contents: contents,
 	}, err
+}
+
+func (d SQLite) RolesFromUser(user string) (string, error) {
+	query, err := d.getQuery("roles-from-user")
+	if err != nil {
+		return "", err
+	}
+
+	rows, err := d.conn.Query(query, user)
+	if err != nil {
+		return "", err
+	}
+
+	if !rows.Next() {
+		return "", fmt.Errorf("couldn't find roles for user '%s'", user)
+	}
+
+	roles := ""
+	err = rows.Scan(&roles)
+	return roles, nil
 }
