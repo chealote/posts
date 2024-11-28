@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"posts/internal/auth"
 	"regexp"
 	"strings"
 )
@@ -41,8 +40,16 @@ type PostDatabase interface {
 	ContentsPost(string) (PostContent, error)
 }
 
+type AuthService interface {
+	ValidateAuthorization(string) (bool, error)
+	RegisterUser(string, string) error
+	Login(string, string) (string, error)
+	Logout(string) error
+}
+
 var (
 	PostDb PostDatabase
+	Auth   AuthService
 
 	ignoreAuthFromPaths = []string{"/signup", "/signin"}
 	rePostIdValidChars  = regexp.MustCompile("[^a-zA-Z0-9]+")
@@ -78,7 +85,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	token := r.Header["Authorization"][0]
 
-	ok, err := auth.ValidateAuthorization(token)
+	ok, err := Auth.ValidateAuthorization(token)
 	if err != nil {
 		fmt.Printf("ERROR: ServeHTTP: %s\n", err)
 		replyError(w, http.StatusInternalServerError)
@@ -137,7 +144,7 @@ func HandleSignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("User:", user.Name, user.Password)
-	if err := auth.RegisterUser(user.Name, user.Password); err != nil {
+	if err := Auth.RegisterUser(user.Name, user.Password); err != nil {
 		fmt.Println("ERROR: HandleSignUp:", err)
 		replyError(w, http.StatusBadRequest)
 		return
@@ -153,9 +160,9 @@ func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := auth.Login(user.Name, user.Password)
+	token, err := Auth.Login(user.Name, user.Password)
 	if err != nil {
-		fmt.Println("ERROR: HandleSignIn from auth.Login():", err)
+		fmt.Println("ERROR: HandleSignIn from Auth.Login():", err)
 		replyError(w, http.StatusUnauthorized)
 		return
 	}
@@ -168,7 +175,7 @@ func HandleLogout(w http.ResponseWriter, r *http.Request) {
 
 	// handler already checked for the auth token, should be safe to use here?
 	token := r.Header["Authorization"][0]
-	if err := auth.Logout(token); err != nil {
+	if err := Auth.Logout(token); err != nil {
 		fmt.Println("ERROR: HandleLogout:", err)
 		replyError(w, http.StatusInternalServerError)
 		return

@@ -41,8 +41,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO this is a special case when databases can be Open() and
-	// Close(); maybe the database doesn't need that or something
 	conn, err := sqlite.Connect(config.SQLite)
 	if err != nil {
 		fmt.Println("ERROR: failed init():", err)

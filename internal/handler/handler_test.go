@@ -2,20 +2,37 @@ package handler
 
 import (
 	"bytes"
-	"io"
 	"encoding/json"
+	"io"
 	"net/http"
 	"testing"
 )
 
-type postDb struct {
-	posts []PostWithId
+type mockAuthService struct{}
+
+func (a mockAuthService) ValidateAuthorization(s string) (bool, error) {
+	return true, nil
+}
+
+func (a mockAuthService) RegisterUser(user, pass string) error {
+	return nil
+}
+
+func (a mockAuthService) Login(user, pass string) (string, error) {
+	return "token", nil
+}
+
+func (a mockAuthService) Logout(token string) error {
+	return nil
 }
 
 type responseWriter struct {
 	*bytes.Buffer
 	status *int
-	headers map[string]string
+}
+
+type postDb struct {
+	posts []PostWithId
 }
 
 func (p postDb) CreatePost(id, title, content string) error {
@@ -68,7 +85,6 @@ func Test_HandlePostRoot_WhenGetPostRoot_GetListOfPosts(t *testing.T) {
 	w := responseWriter{
 		bytes.NewBuffer(nil),
 		&n,
-		nil,
 	}
 
 	expectedPosts := []PostWithId{
@@ -105,9 +121,9 @@ func Test_HandlePostRoot_WhenGetPostRoot_GetListOfPosts(t *testing.T) {
 
 func Test_HandlePostRoot_WhenCreatePostValid_PostGetsCreated(t *testing.T) {
 	expectedPost := PostCreate{
-		Id: "123",
+		Id:    "123",
 		Title: "The post title",
-		Post: "The post contents",
+		Post:  "The post contents",
 	}
 
 	expectedPosts := []PostWithId{
@@ -125,14 +141,13 @@ func Test_HandlePostRoot_WhenCreatePostValid_PostGetsCreated(t *testing.T) {
 
 	r := http.Request{
 		Method: "POST",
-		Body: io.NopCloser(bytes.NewBuffer(b)),
+		Body:   io.NopCloser(bytes.NewBuffer(b)),
 	}
 
 	n := 0
 	w := responseWriter{
 		bytes.NewBuffer(b),
 		&n,
-		nil,
 	}
 	HandlePostRoot(w, &r)
 
@@ -147,7 +162,6 @@ func Test_HandlePostRoot_WhenCreatePostValid_PostGetsCreated(t *testing.T) {
 	w = responseWriter{
 		bytes.NewBuffer(nil),
 		&n,
-		nil,
 	}
 	HandlePostRoot(w, &r)
 
